@@ -1,0 +1,23 @@
+.. fileprocr documentation master file, created by
+   sphinx-quickstart on Fri Oct 23 12:47:22 2020.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to fileprocr's documentation!
+=====================================
+
+Process flat files for upload to a data warehouse.
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+
+   modules
+   sample-yaml
+
+
+.. toctree::
+  :caption: Indices:
+
+  genindex
+  py-modindex

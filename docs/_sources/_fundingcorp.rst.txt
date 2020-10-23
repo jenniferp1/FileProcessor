@@ -1,0 +1,10 @@
+_fundingcorp module
+====================
+
+FileProcessor Mixin Class
+------------------------------
+
+.. automodule:: fileprocr._fundingcorp
+   :members:
+   :undoc-members:
+   :show-inheritance:

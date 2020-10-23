@@ -1,0 +1,6 @@
+MyExcel.xlsx:
+  class: _funds
+  method: averages
+MyHTML.eml:
+  class: _spread
+  method: monthly_cases

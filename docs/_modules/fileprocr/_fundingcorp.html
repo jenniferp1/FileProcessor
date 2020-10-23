@@ -1,0 +1,253 @@
+
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fileprocr._fundingcorp &#8212; fileprocr 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+
+    
+    
+     
+        <script src="../../_static/jquery.cookie.js"></script>
+    
+
+    
+     
+        <script src="../../_static/cloud.base.js"></script>
+    
+
+    
+     
+        <script src="../../_static/cloud.js"></script>
+    
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fileprocr._fundingcorp</a></li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for fileprocr._fundingcorp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Support FileProcessor Class.</span>
+
+<span class="sd">Module contains Funding Corp data file specific processors. User supplies</span>
+<span class="sd">processor method name and a DataFrame with the data for processing.</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">    | :class:`fileprocr.FileProcessor.FileProcessor` - Loads and processes sets of flat files (ETL)</span>
+<span class="sd">    | :class:`fileprocr._fundingcorp.ProcessFC` - Methods for processing data sent from Funding Corp</span>
+
+<span class="sd">-----------------------------------------------------------------------------------------------------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+
+<div class="viewcode-block" id="ProcessFC"><a class="viewcode-back" href="../../_fundingcorp.html#fileprocr._fundingcorp.ProcessFC">[docs]</a><span class="k">class</span> <span class="nc">ProcessFC</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Mixin class used by FileProcessor to process Funding Corp data files.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    ---------</span>
+<span class="sd">    :class:`fileprocr.FileProcessor.FileProcessor`: Base data processing class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#############################################</span>
+    <span class="c1"># PUBLIC METHOD TO SELECT CORRECT PROCESSOR #</span>
+    <span class="c1">#############################################</span>
+
+<div class="viewcode-block" id="ProcessFC.choose_processor"><a class="viewcode-back" href="../../_fundingcorp.html#fileprocr._fundingcorp.ProcessFC.choose_processor">[docs]</a>    <span class="k">def</span> <span class="nf">choose_processor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">proc_info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select user supplied processor method.</span>
+
+<span class="sd">        Available processing methods for:</span>
+<span class="sd">            1. Average Balances TB Q?.xls</span>
+<span class="sd">            2. Balance Sheet TB Q?.xls</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        df: pd.DataFrame</span>
+<span class="sd">            DataFrame with data needing processing.</span>
+<span class="sd">        proc_info : dict</span>
+<span class="sd">            Dictionary containing method name.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Processed DataFrame ready for upload to data warehouse.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        ---------</span>
+<span class="sd">        Sample dictionary format for proc_info (must include a method key as shown).</span>
+
+<span class="sd">        .. code-block:: text</span>
+
+<span class="sd">            {&quot;class&quot;:&quot;_fundingcorp&quot;, &quot;method&quot;:&quot;avg_bal_tb&quot;}</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        Users need to add new processors methods if additional</span>
+<span class="sd">        Funding Corp data files are provided.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">proc_name</span> <span class="o">=</span> <span class="n">proc_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;method&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">proc_name</span> <span class="o">==</span> <span class="s2">&quot;avg_bal_tb&quot;</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__avg_bal_tb</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">proc_name</span> <span class="o">==</span> <span class="s2">&quot;bal_sheet_tb&quot;</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__bal_sheet_tb</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+    <span class="c1">############################################</span>
+    <span class="c1"># PRIVATE FUNDING CORP PROCESSING METHODS  #</span>
+    <span class="c1">############################################</span>
+
+    <span class="c1"># Add new methods below if new data sources are provided.</span>
+
+    <span class="k">def</span> <span class="nf">__avg_bal_tb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process Average Balances TB xls.</span>
+
+<span class="sd">        Private processing method called by choose_processor.</span>
+
+<span class="sd">        Parameter</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Unprocessed DataFrame.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Processed DataFrame.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ---------</span>
+<span class="sd">        fileprocr._fundingcorp.ProcessFC.choose_processor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">__bal_sheet_tb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process Balance Sheet TB xls.</span>
+
+<span class="sd">        Private processing method called by choose_processor.</span>
+
+<span class="sd">        Parameter</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Unprocessed DataFrame.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Processed DataFrame.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ---------</span>
+<span class="sd">        fileprocr._fundingcorp.ProcessFC.choose_processor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fileprocr._fundingcorp</a></li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, FCA.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

@@ -1,0 +1,236 @@
+
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>_fundingcorp module &#8212; fileprocr 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+
+    
+    
+     
+        <script src="_static/jquery.cookie.js"></script>
+    
+
+    
+     
+        <script src="_static/cloud.base.js"></script>
+    
+
+    
+     
+        <script src="_static/cloud.js"></script>
+    
+
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="YAML example" href="sample-yaml.html" />
+    <link rel="prev" title="FileProcessor module" href="fileprocr.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="sample-yaml.html" title="YAML example"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="fileprocr.html" title="FileProcessor module"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">fileprocr package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">_fundingcorp module</a></li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fundingcorp-module">
+<h1>_fundingcorp module<a class="headerlink" href="#fundingcorp-module" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-fileprocr._fundingcorp">
+<span id="fileprocessor-mixin-class"></span><h2>FileProcessor Mixin Class<a class="headerlink" href="#module-fileprocr._fundingcorp" title="Permalink to this headline">¶</a></h2>
+<p>Support FileProcessor Class.</p>
+<p>Module contains Funding Corp data file specific processors. User supplies
+processor method name and a DataFrame with the data for processing.</p>
+<dl>
+<dt>Classes:</dt><dd><div class="line-block">
+<div class="line"><a class="reference internal" href="fileprocr.html#fileprocr.FileProcessor.FileProcessor" title="fileprocr.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">fileprocr.FileProcessor.FileProcessor</span></code></a> - Loads and processes sets of flat files (ETL)</div>
+<div class="line"><a class="reference internal" href="#fileprocr._fundingcorp.ProcessFC" title="fileprocr._fundingcorp.ProcessFC"><code class="xref py py-class docutils literal notranslate"><span class="pre">fileprocr._fundingcorp.ProcessFC</span></code></a> - Methods for processing data sent from Funding Corp</div>
+</div>
+</dd>
+</dl>
+<hr class="docutils" />
+<dl class="py class">
+<dt id="fileprocr._fundingcorp.ProcessFC">
+<em class="property">class </em><code class="sig-prename descclassname">fileprocr._fundingcorp.</code><code class="sig-name descname">ProcessFC</code><a class="reference internal" href="_modules/fileprocr/_fundingcorp.html#ProcessFC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fileprocr._fundingcorp.ProcessFC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin class used by FileProcessor to process Funding Corp data files.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="fileprocr.html#fileprocr.FileProcessor.FileProcessor" title="fileprocr.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">fileprocr.FileProcessor.FileProcessor</span></code></a></dt><dd><p>Base data processing class.</p>
+</dd>
+</dl>
+</div>
+<dl class="py method">
+<dt id="fileprocr._fundingcorp.ProcessFC.choose_processor">
+<code class="sig-name descname">choose_processor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em>, <em class="sig-param"><span class="n">proc_info</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fileprocr/_fundingcorp.html#ProcessFC.choose_processor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fileprocr._fundingcorp.ProcessFC.choose_processor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select user supplied processor method.</p>
+<dl class="simple">
+<dt>Available processing methods for:</dt><dd><ol class="arabic simple">
+<li><p>Average Balances TB Q?.xls</p></li>
+<li><p>Balance Sheet TB Q?.xls</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame with data needing processing.</p></li>
+<li><p><strong>proc_info</strong> (<em>dict</em>) – Dictionary containing method name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Processed DataFrame ready for upload to data warehouse.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Sample dictionary format for proc_info (must include a method key as shown).</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>{&quot;class&quot;:&quot;_fundingcorp&quot;, &quot;method&quot;:&quot;avg_bal_tb&quot;}
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<p>Users need to add new processors methods if additional
+Funding Corp data files are provided.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="sphinx-toc sphinxlocaltoc">
+    <h3><a href="index.html">Page contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">_fundingcorp module</a><ul>
+<li><a class="reference internal" href="#module-fileprocr._fundingcorp">FileProcessor Mixin Class</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div class="sphinxprev">
+    <h4>Previous page</h4>
+    <p class="topless"><a href="fileprocr.html"
+                          title="Previous page">&larr; FileProcessor module</a></p>
+  </div>
+  <div class="sphinxnext">
+    <h4>Next page</h4>
+    <p class="topless"><a href="sample-yaml.html"
+                          title="Next page">&rarr; YAML example</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/_fundingcorp.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="sample-yaml.html" title="YAML example"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="fileprocr.html" title="FileProcessor module"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="modules.html" >fileprocr package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">_fundingcorp module</a></li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, FCA.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

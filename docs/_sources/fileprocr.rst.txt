@@ -1,0 +1,19 @@
+FileProcessor module
+=====================
+
+FileProcessor Base Class
+------------------------------
+
+.. automodule:: fileprocr.FileProcessor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+..
+  Module contents
+  ---------------
+
+  .. automodule:: fileprocr
+     :members:
+     :undoc-members:
+     :show-inheritance:

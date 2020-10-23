@@ -1,0 +1,667 @@
+
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fileprocr.FileProcessor &#8212; fileprocr 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+
+    
+    
+     
+        <script src="../../_static/jquery.cookie.js"></script>
+    
+
+    
+     
+        <script src="../../_static/cloud.base.js"></script>
+    
+
+    
+     
+        <script src="../../_static/cloud.js"></script>
+    
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fileprocr.FileProcessor</a></li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for fileprocr.FileProcessor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Load and process flat files.</span>
+
+<span class="sd">Given a set of flat files load into a DataFrame and process</span>
+<span class="sd">the data to make it acceptable to load to a data warehouse.</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">    | :class:`fileprocr.FileProcessor.FileProcessor` - Base processing class</span>
+<span class="sd">    | :class:`fileprocr._fundingcorp.ProcessFC` - Mixin class specific for processing Funding Corp files</span>
+
+<span class="sd">Examples</span>
+<span class="sd">----------</span>
+<span class="sd">**Usage example**</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">  # identify directory your files are located</span>
+<span class="sd">  path = &quot;C:/Documents/projects/ReportingPlatform/FilesForUpload&quot;</span>
+
+<span class="sd">  # identify where your YAML is located</span>
+<span class="sd">  proc_yaml = &quot;C:/Documents/projects/ReportingPlatform/processors/processors.yml&quot;</span>
+
+<span class="sd">  # initialize instance of FileProcessor</span>
+<span class="sd">  processor = FileProcessor(path)</span>
+
+<span class="sd">  # get list of files in directory</span>
+<span class="sd">  fnames = processor.files()</span>
+
+<span class="sd">  for file, ext in fnames.items():</span>
+<span class="sd">      # load data from file to DataFrame</span>
+<span class="sd">      df = processor.load(file, ext[0])</span>
+
+<span class="sd">      # process data for upload to data warehouse</span>
+<span class="sd">      df = processor.process(file, df, proc_yaml)</span>
+
+<span class="sd">-----------------------------------------------------------------------------------------------------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># find other in-house packages in directory path</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">inspect</span>
+
+<span class="n">currentdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()))</span>
+<span class="p">)</span>
+<span class="n">parentdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">currentdir</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">parentdir</span><span class="p">)</span>
+
+<span class="c1"># import standard python packages</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># import Mixin Classes</span>
+<span class="kn">from</span> <span class="nn">fileprocr</span> <span class="kn">import</span> <span class="n">_fundingcorp</span>
+
+<span class="c1"># import other homegrown modules</span>
+<span class="kn">from</span> <span class="nn">utilsx.readin</span> <span class="kn">import</span> <span class="n">get_fnames</span><span class="p">,</span> <span class="n">checkdir</span><span class="p">,</span> <span class="n">read_yaml</span>
+
+
+<div class="viewcode-block" id="FileProcessor"><a class="viewcode-back" href="../../fileprocr.html#fileprocr.FileProcessor.FileProcessor">[docs]</a><span class="k">class</span> <span class="nc">FileProcessor</span><span class="p">(</span><span class="n">_fundingcorp</span><span class="o">.</span><span class="n">ProcessFC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Process files for upload to data warehouse.</span>
+
+<span class="sd">    Given a directory, return a list of files in the directory,</span>
+<span class="sd">    load files to DataFrames, process DataFrames to prepare for load</span>
+<span class="sd">    to a data warehouse.</span>
+
+<span class="sd">    To add loadable file formats: Add an auxiliary (sub)method to load().</span>
+<span class="sd">    To add specific data source processors: Add a mixin class to FileProcessor().</span>
+
+<span class="sd">    Current loadable file formats:</span>
+<span class="sd">        - xls, xlsx</span>
+<span class="sd">        - html, eml</span>
+
+<span class="sd">    Current data source specific processing mixin classes used by FileProcessor:</span>
+<span class="sd">        - `_fundingcorp.ProcessFC &lt;./_fundingcorp.html#_fundingcorp module&gt;`_</span>
+
+<span class="sd">    .. tip:: New processors for specific data sources can be added via a mixin class.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ------------</span>
+<span class="sd">    dpath : str</span>
+<span class="sd">        Directory path with files to process.</span>
+<span class="sd">    proc_yaml : str</span>
+<span class="sd">        Fully qualified path and name of YAML with info on data source specific processors.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    -----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        DataFrame with data loaded from files.</span>
+<span class="sd">    extensions : list</span>
+<span class="sd">        Loadable extensions.</span>
+<span class="sd">    log : file</span>
+<span class="sd">        Auto-generated log with errors and process status (saved in run directory).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -------</span>
+<span class="sd">    **Extending FileProcessor capabilities**</span>
+
+<span class="sd">    .. note:: A mixin class design is used in building FileProcessor. See :ref:`reference-label` for more information on mixins.</span>
+
+<span class="sd">    * Files are loaded based on format.  A new format can be added by adding a new sub-method that is called by the main `load() method &lt;./fileprocr.html#fileprocr.FileProcessor.FileProcessor.load&gt;`_.</span>
+<span class="sd">    * Files are processed for specific data sources.  A new source can be added via :ref:`mixin classes &lt;reference-label&gt;`.</span>
+<span class="sd">    * When file formats are added, add file extension to self.extensions so user can print list of loadable formats using `loadable_formats() &lt;./fileprocr.html#fileprocr.FileProcessor.FileProcessor.loadable_formats&gt;`_.</span>
+
+<span class="sd">    **Processor Data File (YAML)**</span>
+
+<span class="sd">    Processing flat files requires data source specific processors.  Information for calling a file&#39;s</span>
+<span class="sd">    processor is saved in a yaml. The yaml should be structured as:</span>
+
+<span class="sd">    File name:</span>
+<span class="sd">        | class: &lt;your-mixin-class-name&gt;</span>
+<span class="sd">        | method: &lt;file-specific-processor-from-mixin-class&gt;</span>
+
+<span class="sd">    where the `File name` header is the name of the flat file (e.g., My Data.xlsx)</span>
+<span class="sd">    being processed.</span>
+
+<span class="sd">    .. note:: An example of a yaml is `here &lt;./sample-yaml.html&gt;`_.</span>
+
+<span class="sd">    .. _reference-label:</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    `Making Python classes more modular using mixins &lt;https://www.residentmar.io/2019/07/07/python-mixins.html&gt;`_</span>
+
+<span class="sd">    `Multiple inheritance and mixin classes in Python &lt;https://www.thedigitalcatonline.com/blog/2020/03/27/mixin-classes-in-python/&gt;`_</span>
+
+<span class="sd">    `Making Python classes more modular using mixins &lt;https://www.residentmar.io/2019/07/07/python-mixins.html&gt;`_</span>
+
+<span class="sd">    `Multiple inheritance and mixin classes in Python &lt;https://www.thedigitalcatonline.com/blog/2020/03/27/mixin-classes-in-python/&gt;`_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dpath</span><span class="p">):</span>
+
+        <span class="c1"># expand self.extensions if a new method to load a file format is added</span>
+        <span class="c1"># a new sub-method should also be added below and called by the public load method</span>
+        <span class="c1"># Note: eml and html treated the same</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;xls&quot;</span><span class="p">,</span> <span class="s2">&quot;xlsx&quot;</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="s2">&quot;eml&quot;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dpath</span> <span class="o">=</span> <span class="n">dpath</span>
+
+        <span class="c1"># initialize log</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_log</span><span class="p">()</span>
+
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="FileProcessor.create_log"><a class="viewcode-back" href="../../fileprocr.html#fileprocr.FileProcessor.FileProcessor.create_log">[docs]</a>    <span class="k">def</span> <span class="nf">create_log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Auto-generate a log upon initialization.</span>
+
+<span class="sd">        When a FileProcessor instance is initialized a log will be created.</span>
+<span class="sd">        The log will be saved in a logs subdirectory located in the run directory.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        None : None</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ----------</span>
+<span class="sd">        FileProcessor.write_log</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log_path</span> <span class="o">=</span> <span class="s2">&quot;./logs&quot;</span>
+        <span class="n">checkdir</span><span class="p">(</span>
+            <span class="n">log_path</span>
+        <span class="p">)</span>  <span class="c1"># create log subdir if it does not exist in run dir</span>
+
+        <span class="c1"># logging date-time information</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+        <span class="n">log_date</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;-- Session Activity on </span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2"> --</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+
+        <span class="c1"># create log file name by appending date and time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_path</span><span class="si">}</span><span class="s2">/log_</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">.txt&quot;</span>
+
+        <span class="c1"># write standard log header to log</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_name</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">log_date</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadable_formats</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">message</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1"># create lists to store warnings, errors, and status updates</span>
+        <span class="c1"># these are written to log when write_log is called</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_issues</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># warnings and errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_loads</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># files successfully loaded to DataFrame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_loadfails</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># files that failed to load to DataFrame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_procs</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># files successfully processed (via mixins)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_procfails</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># files that failed processing step</span>
+
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="FileProcessor.files"><a class="viewcode-back" href="../../fileprocr.html#fileprocr.FileProcessor.FileProcessor.files">[docs]</a>    <span class="k">def</span> <span class="nf">files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get list of file names and their extensions.</span>
+
+<span class="sd">        Leveraging utilsx.get_fnames to return a list of all</span>
+<span class="sd">        the files in a directory (fully qualified path of directory</span>
+<span class="sd">        is given by self.dpath).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary with file names as keys and file extensions as values.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        ---------</span>
+<span class="sd">        Sample dictionary key-value structure returned: {full_path_of_file_name:[file_extension]}</span>
+
+<span class="sd">        .. code-block:: text</span>
+
+<span class="sd">            {&quot;C:/User/doejohn/Documents/My Data File.xlsx&quot;:[&quot;xlsx&quot;],</span>
+<span class="sd">             &quot;C:/User/doejohn/Documents/Another Data File.csv&quot;:[&quot;csv&quot;]}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fnames</span> <span class="o">=</span> <span class="n">get_fnames</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dpath</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fnames</span></div>
+
+<div class="viewcode-block" id="FileProcessor.load"><a class="viewcode-back" href="../../fileprocr.html#fileprocr.FileProcessor.FileProcessor.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">fext</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load file into DataFrame.</span>
+
+<span class="sd">        Based on file format (i.e., file extension) calls a private</span>
+<span class="sd">        load method for that file type.  If a load submethod does not</span>
+<span class="sd">        exist for a given file format, an error will be logged and an</span>
+<span class="sd">        empty DataFrame returned.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        fname : str</span>
+<span class="sd">            Fully qualified path and file name to be loaded.</span>
+<span class="sd">        fext : str</span>
+<span class="sd">            File extension denoting file type of file to be loaded.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            DataFrame with file contents.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">fext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- ERROR: &#39;</span><span class="si">{</span><span class="n">fext</span><span class="si">}</span><span class="s2">&#39; is not a loadable format for </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">. </span><span class="se">\n\t</span><span class="s2">No data loaded.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_loadfails</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipping... &#39;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&#39; (see log for details)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading... &#39;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Call correct loader sub-method</span>
+            <span class="k">if</span> <span class="n">fext</span> <span class="o">==</span> <span class="s2">&quot;xls&quot;</span> <span class="ow">or</span> <span class="n">fext</span> <span class="o">==</span> <span class="s2">&quot;xlsx&quot;</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__load_excel</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">fext</span> <span class="o">==</span> <span class="s2">&quot;eml&quot;</span> <span class="ow">or</span> <span class="n">fext</span> <span class="o">==</span> <span class="s2">&quot;html&quot;</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__load_html</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_loads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_loadfails</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+    <span class="k">def</span> <span class="nf">__load_excel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load Excel file to DataFrame.</span>
+
+<span class="sd">        Private file loading sub-method called by load.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        file : str</span>
+<span class="sd">            Fully qualified path and file name to be loaded.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            DataFrame with contents of file.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ---------</span>
+<span class="sd">        FileProcessor.load</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">xl</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">ExcelFile</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">sheets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">xl</span><span class="o">.</span><span class="n">sheet_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Sheet&quot;</span><span class="p">):</span>
+                <span class="n">sheets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="c1"># TODO add multi-sheet load</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sheets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- Warning: multiple worksheets detected. </span><span class="se">\n\t</span><span class="s2">Only first worksheet was loaded.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">xl</span><span class="p">,</span> <span class="n">sheets</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">sheets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">xl</span><span class="p">,</span> <span class="n">sheets</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">__load_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load HTML or EML file to DataFrame.</span>
+
+<span class="sd">        Private file loading sub-method called by load.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        file : str</span>
+<span class="sd">            Fully qualified path and file name to be loaded.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            DataFrame with contents of file.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ---------</span>
+<span class="sd">        FileProcessor.load</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">frames</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_html</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">max_frame</span> <span class="o">=</span> <span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">frames</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_frame</span><span class="p">:</span>
+                <span class="n">max_frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">max_index</span> <span class="o">=</span> <span class="n">index</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">frames</span><span class="p">[</span><span class="n">max_index</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">df</span>
+
+<div class="viewcode-block" id="FileProcessor.loadable_formats"><a class="viewcode-back" href="../../fileprocr.html#fileprocr.FileProcessor.FileProcessor.loadable_formats">[docs]</a>    <span class="k">def</span> <span class="nf">loadable_formats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print list of loadable file formats.</span>
+
+<span class="sd">        Prints a list of loadable file formats to screen or</span>
+<span class="sd">        to log depending on verbose setting. To print to the screen</span>
+<span class="sd">        set verbose to True.</span>
+
+<span class="sd">        List of formats is obtained from self.extensions.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        verbose : bool</span>
+<span class="sd">            True to print to screen; False to print to log (default False).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        list</span>
+<span class="sd">            Message listing loadable file formats.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">File formats that can be loaded:&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
+            <span class="n">message</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">- </span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">message</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">If you need to load another format, add a sub-method under load()&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">message</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">message</span></div>
+
+<div class="viewcode-block" id="FileProcessor.process"><a class="viewcode-back" href="../../fileprocr.html#fileprocr.FileProcessor.FileProcessor.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">proc_yaml</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process data in DataFrames.</span>
+
+<span class="sd">        Process a DataFrame to make it suitable for loading</span>
+<span class="sd">        contents to a data warehouse.</span>
+
+<span class="sd">        .. note:: the file name in fname should be the same as the header in the `proc_yaml &lt;./sample-yaml.html&gt;`_.</span>
+
+<span class="sd">        where proc_yaml should be structured as:</span>
+
+<span class="sd">        File name:</span>
+<span class="sd">            | class: &lt;your-mixin-class-name&gt;</span>
+<span class="sd">            | method: &lt;file-specific-processor-from-mixin-class&gt;</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        fname : str</span>
+<span class="sd">            Fully qualified path and file name of file to be processed.</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            DataFrame with unprocessed file contents.</span>
+<span class="sd">        proc_yaml : str</span>
+<span class="sd">            Fully qualified path and file name of yaml with info on data source specific processors.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Processed DataFrame suitable for upload to data warehouse.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">file</span> <span class="o">=</span> <span class="n">fname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">processor_info</span> <span class="o">=</span> <span class="n">read_yaml</span><span class="p">([</span><span class="n">proc_yaml</span><span class="p">,</span> <span class="n">file</span><span class="p">],</span> <span class="n">abort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">processor_info</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choose_processor</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">processor_info</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_procs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- ERROR: no processor found for &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;. </span><span class="se">\n\t</span><span class="s2">Add processor to data source&#39;s mixin class.&quot;</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_procfails</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- ERROR: no entry found for &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39; in yaml. </span><span class="se">\n\t</span><span class="s2">Verify entry in </span><span class="si">{</span><span class="n">proc_yaml</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_procfails</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="FileProcessor.write_log"><a class="viewcode-back" href="../../fileprocr.html#fileprocr.FileProcessor.FileProcessor.write_log">[docs]</a>    <span class="k">def</span> <span class="nf">write_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write to log.</span>
+
+<span class="sd">        Write warnings, errors, and load/process status to a log.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        field : str</span>
+<span class="sd">            Keyword to specify what should be written to log (default all).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None : None</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        Keyword options for **field**: `all`, `issue`, `load`, `process`</span>
+
+<span class="sd">            * `all` prints everything to the log</span>
+<span class="sd">            * `issue` prints only errors and warnings to log</span>
+<span class="sd">            * `load` prints only load status updates to log</span>
+<span class="sd">            * `process` prints only processing status updated to log</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">field_options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;issue&quot;</span><span class="p">,</span> <span class="s2">&quot;load&quot;</span><span class="p">,</span> <span class="s2">&quot;process&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">field_options</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> is unrecognized option. Log not updated&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_name</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="ow">or</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;issue&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_issues</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Warnings or Errors&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">------------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;No warnings or errors.&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">There were warnings or errors. See:&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">log_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Warnings or Errors&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">------------------&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_issues</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="ow">or</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;load&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_loads</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Successfully Loaded&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-------------------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Successfully Loaded&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-------------------------&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_loads</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_loadfails</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Failing Load&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">------------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Failing Load&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">------------------&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_loadfails</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="ow">or</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_procs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Successfully Processed&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">----------------------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Successfully Processed&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">----------------------------&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_procs</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_procfails</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Failing Processing&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">------------------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Files Failing Processing&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">------------------------&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_procfails</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># execute only if run as a script</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;M:/Documentsmy/projects/PublicReportingPlatform/FilesForUpload&quot;</span>
+    <span class="n">proc_yaml</span> <span class="o">=</span> <span class="s2">&quot;M:/Documentsmy/projects/PublicReportingPlatform/processors/processors.yml&quot;</span>
+
+    <span class="n">processor</span> <span class="o">=</span> <span class="n">FileProcessor</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">fnames</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">files</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">fnames</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">ext</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="c1"># process data for upload to data warehouse</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">proc_yaml</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+
+    <span class="c1"># TODO build processors for specific files (use Mixins)</span>
+
+    <span class="n">processor</span><span class="o">.</span><span class="n">write_log</span><span class="p">()</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fileprocr.FileProcessor</a></li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, FCA.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

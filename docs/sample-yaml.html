@@ -1,0 +1,199 @@
+
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YAML example &#8212; fileprocr 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+
+    
+    
+     
+        <script src="_static/jquery.cookie.js"></script>
+    
+
+    
+     
+        <script src="_static/cloud.base.js"></script>
+    
+
+    
+     
+        <script src="_static/cloud.js"></script>
+    
+
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Index" href="genindex.html" />
+    <link rel="prev" title="_fundingcorp module" href="_fundingcorp.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="genindex.html" title="Index"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="_fundingcorp.html" title="_fundingcorp module"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">YAML example</a></li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="yaml-example">
+<h1>YAML example<a class="headerlink" href="#yaml-example" title="Permalink to this headline">¶</a></h1>
+<a class="reference internal image-reference" href="_images/sample-yaml.png"><img alt="yaml example format" src="_images/sample-yaml.png" style="width: 350px;" /></a>
+<p>An example of the YAML format required to process files using <a class="reference external" href="./fileprocr.html#fileprocr.FileProcessor.FileProcessor.process">FileProcessor.process()</a>.</p>
+<p>A fully qualified path + yaml file name should be passed as one of the arguments to <cite>FileProcessor.process()</cite>.</p>
+<p>Data blocks in the YAML should have a header name that is the same as the file name of the file being processed.
+For example, if you are processing a file called <cite>MyExcel.xlsx</cite> then the header in the YAML should be <cite>MyExcel.xlsx</cite>
+(as shown in figure above).</p>
+<p>The values assgined to the <cite>class</cite> and <cite>method</cite> keys should identify the mixin class and method name of the processor
+that is used to process the data from <cite>MyExcel.xlsx</cite>.</p>
+<p><strong>Usage example</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># identify directory your files are located</span>
+<span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;C:/Documents/projects/ReportingPlatform/FilesForUpload&quot;</span>
+
+<span class="c1"># identify where your YAML is located</span>
+<span class="n">proc_yaml</span> <span class="o">=</span> <span class="s2">&quot;C:/Documents/projects/ReportingPlatform/processors/processors.yml&quot;</span>
+
+<span class="c1"># initialize instance of FileProcessor</span>
+<span class="n">processor</span> <span class="o">=</span> <span class="n">FileProcessor</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+<span class="c1"># get list of files in directory</span>
+<span class="n">fnames</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">files</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">fnames</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>OUTPUT</strong></p>
+<p>{“C:/Documents/projects/ReportingPlatform/FilesForUpload/MyExcel.xlsx”:[“xlsx”],
+| “C:/Documents/projects/ReportingPlatform/FilesForUpload/MyHTML.eml”:[“eml”]}</p>
+<p>Assuming you want to process data from MyExcel.xlsx:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">file</span> <span class="o">=</span> <span class="s2">&quot;C:/Documents/projects/ReportingPlatform/FilesForUpload/MyExcel.xlsx&quot;</span>
+<span class="n">ext</span> <span class="o">=</span> <span class="s2">&quot;xlsx&quot;</span>
+
+<span class="c1"># load data from file to DataFrame</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+
+<span class="c1"># process data for upload to data warehouse</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">proc_yaml</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div class="sphinxprev">
+    <h4>Previous page</h4>
+    <p class="topless"><a href="_fundingcorp.html"
+                          title="Previous page">&larr; _fundingcorp module</a></p>
+  </div>
+  <div class="sphinxnext">
+    <h4>Next page</h4>
+    <p class="topless"><a href="genindex.html"
+                          title="Next page">&rarr; Index</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/sample-yaml.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="genindex.html" title="Index"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="_fundingcorp.html" title="_fundingcorp module"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">fileprocr 0.0.1 documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">YAML example</a></li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, FCA.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>
