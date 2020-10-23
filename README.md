@@ -14,14 +14,14 @@ supplied via mixin classes.
  - Load flat files to a pandas DataFrame.
  - Process data using data source specific processors to make suitable for upload
  to a data warehouse.
- - Additional processors easily incorporated by adding a new [processor method](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/master/docs/fileprocessor.html)
- to the FileProcessor Class via a [Mixin Class](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/master/docs/fileprocessor.html).
+ - Additional processors easily incorporated by adding a new [processor method](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/main/docs/fileprocessor.html)
+ to the FileProcessor Class via a [Mixin Class](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/main/docs/fileprocessor.html).
  - Information on flat file processors is easily stored and provided to FileProcessor via
- [yaml files](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/master/docs/sample-yaml.html). Storage in a yaml also makes it easy to update or add processors
+ [yaml files](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/main/docs/sample-yaml.html). Storage in a yaml also makes it easy to update or add processors
  over time without having to make changes to the underlying code.
 
 ## Documentation
 
-Documentation and help are provided [here](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/master/docs/index.html).
+Documentation and help are provided [here](https://htmlpreview.github.io/?https://github.com/jenniferp1/FileProcessor/blob/main/docs/index.html).
 
 Sample input yaml files are also included [here](./input).
